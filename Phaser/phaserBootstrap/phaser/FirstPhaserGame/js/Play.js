@@ -5,13 +5,18 @@ Play.prototype = {
 		this.numStars = 12;
 		this.PLAYERSPEED = 250;
 		this.PLAYERJUMP = -450;
-		console.log(this);   // why do these two lines
-		console.log(Play);   // log totally different things
+		// console.log(this);   // why do these two lines
+		// console.log(Play);   // log totally different things
+
+		// Make audio players
+		this.starSound = game.add.audio('collectS');
+		this.diamondSound = game.add.audio('collectD');
 	},
 	create: function() {
 		
 		// Enable physics
 		game.physics.startSystem(Phaser.Physics.ARCADE);
+
 		
 		// Place background and make it fit new aspect ratio
 		var sky = game.add.sprite(0, 0, 'sky');
@@ -44,7 +49,7 @@ Play.prototype = {
 	    ledge.body.immovable = true;
 		
 		// Make player and set it's properties
-		player = game.add.sprite(32, game.world.height - 150, 'dude');
+		var player = game.add.sprite(32, game.world.height - 150, 'dude');
 		game.physics.arcade.enable(player);
 	    player.body.gravity.y = 375;
 	    player.body.collideWorldBounds = true;
@@ -88,7 +93,11 @@ Play.prototype = {
 		
 		// Make controller
 		cursors = game.input.keyboard.createCursorKeys();
-		console.log(this);
+
+		// Make 'snow'
+		for (var i = 0; i < 100; i++){
+			blackHole = new Weather(game, 'hole', Math.random() * 0.75+ 0.5, Math.random() * 100 + 50, Math.random() * 150 + 50);
+		}
 	},
 
 	update: function() {
@@ -152,11 +161,11 @@ Play.prototype = {
 }
 
 function collectStar (player, star) {	    
-    // Collect star and add score
+    // Collect star, add score, and play pirated sound
     star.kill();
+    this.starSound.play();
 	this.score += 10;
 	this.numStars--;
-	console.log(this);
 	if (this.numStars <= 0) {
 		game.state.start("GameOver", true, false, this.score);
 	}
@@ -166,6 +175,8 @@ function collectStar (player, star) {
 function collectDiamond (player, diamond) {    
     // Collect diamond and add score
     diamond.kill();
+    this.diamondSound.play();
+
 	this.score += 50;
     scoreText.text = 'Score: ' + this.score;
 }

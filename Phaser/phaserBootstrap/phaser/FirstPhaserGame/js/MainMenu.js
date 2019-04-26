@@ -9,6 +9,9 @@ MainMenu.prototype = {
 	    game.load.spritesheet('dude', 'assets/img/dude.png', 32, 48);
 		game.load.spritesheet('baddie', 'assets/img/baddie.png', 32, 32);
 		game.load.image('diamond', 'assets/img/diamond.png');
+		game.load.image('hole', 'assets/img/BlackHole.jpg');
+		game.load.audio('collectS', 'assets/audio/CollectStar.mp3');
+		game.load.audio('collectD', 'assets/audio/CollectDiamond.mp3');
 
 		console.log("loaded assets");
 	},
