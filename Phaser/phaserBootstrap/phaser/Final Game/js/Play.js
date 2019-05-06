@@ -75,6 +75,7 @@ Play.prototype = {
    		thisBody.copyFrom(this.asteroid);
 
    		distance = thisBody.distance(destBody, true);
+   		Phaser.Point.subtract(destBody, thisBody, gravityVector);
 
    		gravityAngle = Phaser.Point.angle(destBody, thisBody);
 
@@ -85,7 +86,6 @@ Play.prototype = {
    		/*
 		vX = this.earth.body.x - this.asteroid.body.x;
 		vY = this.earth.body.y - this.asteroid.body.y;
-		distance = Math.sqrt(vX*vX + vY*vY);
 
 		vX = vX/distance;
 		vY = vY/distance;
