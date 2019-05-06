@@ -1,7 +1,7 @@
 var Weather = function(game, key, scale, rotation, speed) {
 	// Make the sprite when function is called
 	Phaser.Sprite.call(this, game, game.rnd.integerInRange(0, game.width), game.rnd.integerInRange(0, game.height), key);
-	console.log('new hole');
+	// console.log('new hole');
 
 	// set necessary properties
 	this.anchor.set(0.5);

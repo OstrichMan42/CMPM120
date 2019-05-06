@@ -1,3 +1,7 @@
+"use strict";
+
+var time;
+
 var Play = function(game) {};
 
 Play.prototype = {
@@ -5,104 +9,143 @@ Play.prototype = {
 		// Necessary variables
 		this.score = 0;
 		this.numStars = 12;
-		this.PLAYERSPEED = 250;
-		this.PLAYERJUMP = -450;
+		this.PLAYERSPEED = 100;
+		this.PLAYERJUMP = -350;
 		this.player;
+		this.spawnTimer;
+		this.difficulty = 2;
 		console.log(this);   // why do these two lines
 		console.log(Play);   // log totally different things
 
 		// Make audio players
-
+		this.musicPlayer = game.add.audio('music');
+		this.soundPlayer = game.add.audio('jump');
 	},
 	create: function() {
+		// Start music
+		this.musicPlayer.play("", 0, 1, true);
 		
 		// Enable physics
 		game.physics.startSystem(Phaser.Physics.ARCADE);
 
 		
 		// Place background and make it fit new aspect ratio
-		var sky = game.add.sprite(0, 0, 'sky');
-		sky.scale.setTo(1, 1.5);
+		this.background = game.add.tileSprite(0, 0, game.width, game.height, 'bg');
 		
 		// Make platform group and enable physics for them
-		platforms = game.add.group();
-		platforms.enableBody = true;
+		game.platforms = game.add.group();
+		game.platforms.enableBody = true;
+
+		// Make group for enemies
+		game.enemies = game.add.group();
 		
 		// Make, scale, and set ground as immovable
-		var ground = platforms.create(0, game.world.height - 64, 'ground');
+		var ground = game.platforms.create(0, game.world.height - 64, 'runnerSheet', 'platform');
 		ground.scale.setTo(2, 2);
 		ground.body.immovable = true;
-		
-		// Make stars and set their physics
-		// stars = game.add.group();
-		// stars.enableBody = true;
-		// for (var i = 0; i < 12; i++)
-		// {
-		//  //  Make stars
-		//  var star = stars.create(i * 70, 0, 'star');
 			
-		// 	Set physics
-		//     star.body.gravity.y = 300;
-		//     star.body.bounce.y = 0.7 + Math.random() * 0.2;
-		//  }
+		// 	Make character
+		this.player = game.add.sprite(95, game.world.height - 150, 'Bunny');
 
-		this.player = game.add.sprite(32, game.world.height - 150, 'dude');
 		game.physics.arcade.enable(this.player);
-	    this.player.body.gravity.y = 375;
-	    this.player.body.collideWorldBounds = true;
-
-	    this.player.animations.add('left', [0, 1, 2, 3], 10, true);
-	    this.player.animations.add('right', [5, 6, 7, 8], 10, true);
+	    this.player.body.gravity.y = 975;
+	    this.player.body.collideWorldBounds = false;
+	    this.player.animations.frame = 0;
+		this.player.anchor.x = 0.5;
 		
 		// Make score text in top left
-		// scoreText = game.add.text(16, 16, 'Score: ' + this.score, { fontSize: '32px', fill: '#ACE' });
+		this.scoreText = game.add.text(16, 16, 'Score: ' + this.score, { fontSize: '32px', fill: '#358c45' });
 		
 		// Make controller
-		cursors = game.input.keyboard.createCursorKeys();
+		var cursors = game.input.keyboard.createCursorKeys();
 
-		// Make wheather
-		for (var i = 0; i < 100; i++){
-			blackHole = new Weather(game, 'hole', Math.random() * 0.75+ 0.5, Math.random() * 100 + 50, -(Math.random() * 150 + 50));
-		}
+		// Start the random platforms
+		var plat = new Platform(game, 0.7, 80, this.player, 0);
+		plat = new Platform(game, 0.7, 80, this.player, 2);
+
+		// Make a timer for spawning obstacles
+		// help from http://jsfiddle.net/lewster32/vd70o41p/ and phaser documentation
+		time = game.time.create();
+		this.spawnTimer = time.add(10000 - 70 * this.difficulty, spawnEnemy, this);
+		time.start();
+
+		this.player.hitBird = false;
 	},
 
 	update: function() {
 		// run game loop
-		this.player.body.velocity.x = 0;
+		//this.player.body.velocity.x = 0;
 
 		// Check collisions
-		var hitPlatform = game.physics.arcade.collide(this.player, platforms);
+		if (!this.player.hitBird){
+			this.hitPlatform = game.physics.arcade.collide(this.player, game.platforms);
+		}
 
-	    if (cursors.left.isDown)
-	    {
-	        // Move left if pressing left
-	        this.player.body.velocity.x = -this.PLAYERSPEED;  // Set horizontal velocity (higher than in tutorial)
+		this.jumping = game.input.keyboard.downDuration(Phaser.KeyCode.UP, 400);
 
-	        this.player.animations.play('left'); // Play animation
-	    }
-	    else if (cursors.right.isDown)
-	    {
-	        // Move right if pressing right
-	        this.player.body.velocity.x = this.PLAYERSPEED;
+		if (this.player.body.touching.down && this.hitPlatform){
+			//Player is on the ground
+			this.jumps = 1;
+			this.player.airborne = false;
 
-	        this.player.animations.play('right');
-	    }
-	    else
-	    {
-	        // Idle animation
-	        this.player.animations.stop();
+			this.player.animations.frame = 0;
+		} else{
+			// In the air
+			this.player.animations.play('jump');
+			this.score += this.difficulty * 0.01;
+			this.scoreText.text = 'Score: '+Math.floor(this.score);
 
-	        this.player.frame = 4;
+			// Scroll the background
+			this.background.tilePosition.x -= 0.5 + this.difficulty/3;
+
+			this.player.animations.frame = 1;
+		}
+
+		// Jump sound effect
+		if (!this.player.airborne && game.input.keyboard.isDown(Phaser.KeyCode.UP)){
+			this.soundPlayer.play();
+		}
+
+	    if (this.jumps > 0 && this.jumping){
+	    	// Set vertical velocity
+	        this.player.body.velocity.y = this.PLAYERJUMP;
+	        this.player.airborne = true;
 	    }
-	    if (cursors.up.isDown && this.player.body.touching.down && hitPlatform)
-	    {
-	        this.player.body.velocity.y = this.PLAYERJUMP; // Set vertical velocity (higher than in tutorial)
+
+	    if (this.player.airborne && game.input.keyboard.upDuration(Phaser.KeyCode.UP)){
+	    	this.jumps--;
 	    }
+
+	    // Make sure player stays centerish
+	    if (this.player.airborne && this.player.body.x < 200){
+	    	this.player.body.velocity.x = 15;
+	    } else{
+	    	this.player.body.velocity.x = 0;
+	    }
+
+	    // If the plpayer is carried offscreen they lose
+	    if(this.player.body.x < -5){
+	    	this.musicPlayer.pause();
+	    	console.log(this.player.body.x);
+			game.state.start("GameOver", true, false, Math.floor(this.score));
+		}
+
+	    // Check enemy collision
+	    if (!this.player.hitBird){
+			this.player.hitBird = game.physics.arcade.overlap(this.player, game.enemies);
+		}
 	}
 }
 
-function collectStar (player, star) {	    
-    
+function spawnEnemy () {	    
+    // Spawn an obstacle
+	var enemy = new Bird(game, this.difficulty, this.player);
+
+	this.difficulty = Math.min(this.difficulty + 0.5, 100);
+
+	console.log("difficulty is "+this.difficulty);
+
+	this.spawnTimer = time.add(6000 + (Math.random() * 4000) - 70 * this.difficulty, spawnEnemy, this);
 }
 
 game.state.add("Play", Play);
