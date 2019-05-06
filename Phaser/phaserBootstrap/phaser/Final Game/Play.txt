@@ -20,13 +20,15 @@ Play.prototype = {
 			
 		// Make character 1
 		this.earth = game.add.sprite(100, game.world.centerY, 'earth');
-		this.earth.anchor.set(0.5);
+		this.earth.anchor.x = 0.5;
+		this.earth.anchor.y = 0.5;
 		this.earth.scale.setTo(0.25);
 		game.physics.arcade.enable(this.earth);
 
 		// Make character 2
 		this.mars = game.add.sprite(game.width - 100, game.world.centerY, 'mars');
-		this.mars.anchor.set(0.5);
+		this.mars.anchor.x = 0.5;
+		this.mars.anchor.y = 0.5;
 		this.mars.scale.setTo(0.25);
 		game.physics.arcade.enable(this.mars);
 
@@ -35,8 +37,8 @@ Play.prototype = {
 		game.physics.arcade.enable(this.asteroid);
 	    this.asteroid.body.collideWorldBounds = false;
 	    this.asteroid.animations.frame = 0;
-		this.asteroid.anchor.set(0.5);
-		this.asteroid.body.velocity.y = -50;
+		this.asteroid.anchor.x = 0.5;
+		this.asteroid.anchor.y = 0.5;
 		
 		// Make controller
 		var cursors = game.input.keyboard.createCursorKeys();
@@ -51,6 +53,11 @@ Play.prototype = {
 		this.p1Point = new Phaser.Point(100, game.world.centerY,);
 		this.p2Point = new Phaser.Point(game.width - 100, game.world.centerY,);
 		this.astPoint = new Phaser.Point(game.world.centerX, game.world.centerY,);
+		/*
+		this.p1Point = this.earth.anchor.clone();
+		this.p2Point = this.mars.anchor.clone();
+		this.astPoint = this.asteroid.anchor.clone();
+		*/
 	},
 
 	update: function() {
@@ -59,41 +66,22 @@ Play.prototype = {
     	// var vY;
    		var destBody = new Phaser.Point();
    		var thisBody = new Phaser.Point();
-   		var gravityVector = new Phaser.Point();
-   		var velocityVector = new Phaser.Point();
+   		var gravityVector;
    		var gravityAngle;
    		var distance;
-   		var mass = 500;
 
    		// Set points to be the x,y positions of sprites
    		destBody.copyFrom(this.earth);
    		thisBody.copyFrom(this.asteroid);
 
    		distance = thisBody.distance(destBody, true);
-
    		Phaser.Point.subtract(destBody, thisBody, gravityVector);
-   		gravityVector.normalize();
 
-   		// Unsure if this angle will be useful
-   		// gravityAngle = Phaser.Point.angle(destBody, thisBody);
+   		gravityAngle = Phaser.Point.angle(destBody, thisBody);
 
-   		// Create a vector with magnitude greater than one 
-   		gravityVector.clone(velocityVector);
-   		velocityVector.setMagnitude(mass/distance);
-   		// console.log(velocityVector);
+   		game.physics.arcade.accelerateToXY(this.asteroid, destBody.x, destBody.y, 600 / distance);
 
-   		// Alter velocity based on gravity
-   		this.asteroid.body.velocity.x += velocityVector.x;
-   		this.asteroid.body.velocity.y += velocityVector.y;
-
-   		// .clamp keeps the value between the two numbers given, can be used to set a max speed
-   		/*
-   		this.asteroid.body.velocity.clampX(-375, 375);
-   		this.asteroid.body.velocity.clampY(-225, 225);
-   		*/
-   		console.log(this.asteroid.body.velocity);
-
-   		
+   		console.log(distance);
 
    		/*
 		vX = this.earth.body.x - this.asteroid.body.x;
